@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>he-Pokémon</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>he-Pokémon Card Viewer</h1>
+  <form id="pokemon-form">
+    <label>
+      Number of Cards:
+      <input type="number" id="num-cards" min="1" max="20" required>
+    </label>
+    <label>
+      Category (Type):
+      <select id="type-select">
+        <option value="fire">Fire</option>
+        <option value="water">Water</option>
+        <option value="grass">Grass</option>
+        <option value="electric">Electric</option>
+        <option value="bug">Bug</option>
+        <option value="psychic">Psychic</option>
+        <option value="ground">Ground</option>
+        <!-- Add more types -->
+      </select>
+    </label>
+    <button type="submit">Get Pokémon</button>
+  </form>
+
+  <div id="cards-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

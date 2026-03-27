@@ -1,41 +1,57 @@
-document.getElementById("pokemon-form").addEventListener("submit", async function (e) {
-  e.preventDefault();
-  const numCards = document.getElementById("num-cards").value;
-  const type = document.getElementById("type-select").value;
-  const container = document.getElementById("cards-container");
-  container.innerHTML = "Loading...";
+const form = document.getElementById("pokemon-form");
+const cardsInput = document.getElementById("num-cards");
+const typeSelect = document.getElementById("type-select");
+const container = document.getElementById("cards-container");
+const statusMessage = document.getElementById("status-message");
+const submitBtn = document.getElementById("submit-btn");
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const numCards = Number(cardsInput.value);
+  const type = typeSelect.value;
+
+  statusMessage.textContent = "Summoning Pokémon cards...";
+  container.innerHTML = "";
+  submitBtn.disabled = true;
 
   try {
-    // Fetch all Pokémon of selected type
-    const typeRes = await fetch(`https://pokeapi.co/api/v2/type/${type}`);
-    const typeData = await typeRes.json();
-    const allPokemons = typeData.pokemon.map(p => p.pokemon);
+    const typeResponse = await fetch(`https://pokeapi.co/api/v2/type/${type}`);
 
-    // Pick random Pokémon up to the number requested
-    const shuffled = allPokemons.sort(() => 0.5 - Math.random());
-    const selected = shuffled.slice(0, numCards);
+    if (!typeResponse.ok) {
+      throw new Error("Unable to load type data.");
+    }
 
-    // Fetch individual Pokémon details
-    const promises = selected.map(p =>
-      fetch(p.url).then(res => res.json())
+    const typeData = await typeResponse.json();
+    const allPokemons = typeData.pokemon.map((entry) => entry.pokemon);
+
+    const selected = allPokemons
+      .sort(() => Math.random() - 0.5)
+      .slice(0, numCards);
+
+    const pokemonResponses = await Promise.all(
+      selected.map((pokemon) => fetch(pokemon.url).then((res) => res.json()))
     );
-    const results = await Promise.all(promises);
 
-    // Display cards
-    container.innerHTML = "";
-    results.forEach(poke => {
-      const card = document.createElement("div");
+    statusMessage.textContent = `Showing ${pokemonResponses.length} ${type} Pokémon cards.`;
+
+    pokemonResponses.forEach((pokemon) => {
+      const types = pokemon.types.map((typeInfo) => typeInfo.type.name);
+      const card = document.createElement("article");
       card.className = "card";
       card.innerHTML = `
-        <h3>${poke.name.toUpperCase()}</h3>
-        <img src="${poke.sprites.front_default}" alt="${poke.name}">
-        <p><strong>ID:</strong> ${poke.id}</p>
-        <p><strong>Type:</strong> ${poke.types.map(t => t.type.name).join(", ")}</p>
+        <h3>${pokemon.name.toUpperCase()}</h3>
+        <img src="${pokemon.sprites.front_default}" alt="${pokemon.name}">
+        <p class="card-meta">#${pokemon.id}</p>
+        <p class="card-meta">Base EXP: ${pokemon.base_experience ?? "N/A"}</p>
+        <div class="type-pill">${types.join(" · ")}</div>
       `;
       container.appendChild(card);
     });
-  } catch (err) {
-    console.error(err);
-    container.innerHTML = "Something went wrong!";
+  } catch (error) {
+    console.error(error);
+    statusMessage.textContent = "Could not load Pokémon right now. Please try again.";
+  } finally {
+    submitBtn.disabled = false;
   }
 });
